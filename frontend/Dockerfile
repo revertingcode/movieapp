@@ -1,26 +1,26 @@
-# Use an official Node runtime as a parent image
-FROM node:14-alpine
+# Use official Node.js runtime as base image
+FROM node:18-alpine
 
-# Set the working directory
-WORKDIR /usr/src/app
+# Set working directory in container
+WORKDIR /app
 
-# Copy package.json and package-lock.json
+# Copy package.json and package-lock.json (if it exists)
 COPY package*.json ./
 
 # Install dependencies
 RUN npm install
 
-# Build the React app
+# Copy the rest of the application code
+COPY . .
+
+# Build the Vite application for production
 RUN npm run build
 
-# Use an Nginx image to serve the built app
-FROM nginx:alpine
+# Install serve to run the built application
+RUN npm install -g serve
 
-# Copy the built app files to the Nginx server
-COPY --from=0 /usr/src/app/build /usr/share/nginx/html
+# Expose the port the app will run on
+EXPOSE 3001
 
-# Expose the port Nginx runs on
-EXPOSE 80
-
-# Start Nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Command to run the application
+CMD ["serve", "-s", "dist", "-l", "3001"]
