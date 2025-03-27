@@ -88,7 +88,7 @@ function MovieList({ onLogout, userEmail }) {
               {downloading[movie.id] ? (
                 <span className="download-loading">
                   <span className="spinner"></span>
-                  Wait for download...
+                  In download...
                 </span>
               ) : (
                 'Download'
