@@ -59,10 +59,7 @@ function Login({ onLogin }) {
           onChange={(e) => setPassword(e.target.value)}
         />
         <button type="submit">{isLoginMode ? 'Login' : 'Sign Up'}</button>
-        <button type="button" onClick={toggleMode} className="toggle-btn">
-          {isLoginMode ? 'Need an account? Sign Up' : 'Already have an account? Login'}
-        </button>
-      </form>
+       </form>
     </div>
   );
 }

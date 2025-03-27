@@ -26,12 +26,13 @@ db.serialize(() => {
     )
   `);
 
-  // Inseriamo un utente di default solo se non esiste già
+  // Add a user
   db.get('SELECT COUNT(*) as count FROM users', (err, row) => {
     if (err) {
       console.error(err.message);
     } else if (row.count === 0) {
-      db.run(`INSERT INTO users (email, password) VALUES ('admin@spidermovies.com', 'password123')`);
+      db.run(`INSERT INTO users (email, password) VALUES ('admin@spi.com', 'accendino01')`);
+      db.run(`INSERT INTO users (email, password) VALUES ('gae@spi.com', 'fabfilm2024')`);
     }
   });
 });
