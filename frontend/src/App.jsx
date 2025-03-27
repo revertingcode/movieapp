@@ -22,7 +22,7 @@ function App() {
   return (
     <Router>
       <div className="app">
-        {isLoggedIn && userEmail === 'admin@spidermovies.com' && (
+        {isLoggedIn && userEmail === 'admin@spi.com' && (
           <Link to="/settings" className="settings-icon">⚙️</Link>
         )}
         <Routes>
@@ -34,7 +34,7 @@ function App() {
             )
           } />
           <Route path="/settings" element={
-            isLoggedIn && userEmail === 'admin@spidermovies.com' ? (
+            isLoggedIn && userEmail === 'admin@spi.com' ? (
               <Settings userEmail={userEmail} />
             ) : (
               <Login onLogin={handleLogin} />
