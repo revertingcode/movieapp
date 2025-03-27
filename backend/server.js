@@ -65,6 +65,7 @@ async function syncMoviesWithFolder() {
 
 // Login endpoint
 app.post('/api/login', (req, res) => {
+  console.log("test");
   const { email, password } = req.body;
   db.get(
     'SELECT * FROM users WHERE email = ? AND password = ?',
