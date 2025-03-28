@@ -49,6 +49,11 @@ function MovieList({ onLogout, userEmail }) {
     }
   };
 
+  const handleWatch = (filePath) => {
+    // Open the movie file in a new tab for streaming
+    window.open(filePath, '_blank');
+  };
+
   const handleRefresh = async () => {
     try {
       await axios.post('/api/admin/refresh', { email: userEmail });
@@ -63,7 +68,7 @@ function MovieList({ onLogout, userEmail }) {
       <div className="header">
         <h2>Movie List</h2>
         <div>
-          {userEmail === 'admin@spi.com' && (
+          {userEmail === 'admin@spidermovies.com' && (
             <button onClick={handleRefresh} className="refresh-btn">Refresh</button>
           )}
           <button onClick={onLogout} className="logout-btn">Logout</button>
@@ -79,21 +84,30 @@ function MovieList({ onLogout, userEmail }) {
       <div className="movie-list">
         {movies.map((movie) => (
           <div key={movie.id} className="movie-card">
-            <h3 title={movie.title}>{movie.title}</h3> {/* Aggiunto attributo title */}
-            <button
-              onClick={() => handleDownload(movie.id)}
-              className="download-btn"
-              disabled={downloading[movie.id]}
-            >
-              {downloading[movie.id] ? (
-                <span className="download-loading">
-                  <span className="spinner"></span>
-                  In download...
-                </span>
-              ) : (
-                'Download'
-              )}
-            </button>
+            <h3 title={movie.title}>{movie.title}</h3>
+            <p className="file-size">{movie.file_size.toFixed(2)} GB</p>
+            <div className="button-group">
+              <button
+                onClick={() => handleDownload(movie.id)}
+                className="download-btn"
+                disabled={downloading[movie.id]}
+              >
+                {downloading[movie.id] ? (
+                  <span className="download-loading">
+                    <span className="spinner"></span>
+                    Wait for download...
+                  </span>
+                ) : (
+                  'Download'
+                )}
+              </button>
+              <button
+                onClick={() => handleWatch(movie.file_path)}
+                className="watch-btn"
+              >
+                Watch
+              </button>
+            </div>
           </div>
         ))}
       </div>

@@ -176,11 +176,22 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  cursor: pointer; /* Indica che è interattivo */
+  cursor: pointer;
 }
 
 .movie-card h3:hover {
-  color: #ff4444; /* Cambio colore al passaggio del mouse per feedback visivo */
+  color: #ff4444;
+}
+
+.movie-card .file-size {
+  color: #aaaaaa;
+  font-size: 0.8rem;
+  margin: 0;
+}
+
+.button-group {
+  display: flex;
+  gap: 0.5rem;
 }
 
 .download-btn {
@@ -194,6 +205,7 @@
   align-items: center;
   justify-content: center;
   min-height: 32px;
+  flex: 1; /* Equal width with watch-btn */
 }
 
 .download-btn:hover {
@@ -219,6 +231,20 @@
   border-top: 2px solid transparent;
   border-radius: 50%;
   animation: spin 1s linear infinite;
+}
+
+.watch-btn {
+  padding: 0.5rem;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  flex: 1; /* Equal width with download-btn */
+}
+
+.watch-btn:hover {
+  background: #0056b3;
 }
 
 @keyframes spin {

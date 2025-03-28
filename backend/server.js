@@ -13,11 +13,32 @@ let MOVIES_DIR = path.join(__dirname, 'movies');
 
 app.use('/movies', express.static(MOVIES_DIR));
 
+// Recursive function to get all movie files in directory and subdirectories
+async function getAllMovieFiles(dir) {
+  const movieFiles = [];
+  const entries = await fs.readdir(dir, { withFileTypes: true });
+
+  for (const entry of entries) {
+    const fullPath = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      const subFiles = await getAllMovieFiles(fullPath);
+      movieFiles.push(...subFiles);
+    } else if (/\.(mp4|avi|mkv)$/i.test(entry.name)) {
+      const relativePath = path.relative(MOVIES_DIR, fullPath).replace(/\\/g, '/');
+      const stats = await fs.stat(fullPath);
+      const sizeInGB = stats.size / (1024 * 1024 * 1024);
+      movieFiles.push({ relativePath, sizeInGB });
+    }
+  }
+
+  return movieFiles;
+}
+
+// Function to synchronize movies with the folder and its subdirectories
 async function syncMoviesWithFolder() {
   try {
     await fs.mkdir(MOVIES_DIR, { recursive: true });
-    const files = await fs.readdir(MOVIES_DIR);
-    const movieFiles = files.filter(file => /\.(mp4|avi|mkv)$/i.test(file));
+    const movieFiles = await getAllMovieFiles(MOVIES_DIR);
 
     const existingMovies = await new Promise((resolve, reject) => {
       db.all('SELECT title, file_path FROM movies', (err, rows) => {
@@ -29,24 +50,38 @@ async function syncMoviesWithFolder() {
     const existingTitles = new Set(existingMovies.map(m => m.title));
 
     for (const file of movieFiles) {
-      const title = path.basename(file, path.extname(file));
-      const filePath = `/movies/${file}`;
+      const title = path.basename(file.relativePath, path.extname(file.relativePath));
+      const filePath = `/movies/${file.relativePath}`; // Full relative path including subdirectory
+      const fileSize = file.sizeInGB;
 
       if (!existingTitles.has(title)) {
+        try {
+          await new Promise((resolve, reject) => {
+            db.run(
+              'INSERT INTO movies (title, file_path, file_size) VALUES (?, ?, ?)',
+              [title, filePath, fileSize],
+              (err) => (err ? reject(err) : resolve())
+            );
+          });
+          console.log(`Added movie: ${title} at ${filePath} (${fileSize.toFixed(2)} GB)`);
+        } catch (err) {
+          console.error(`Failed to insert ${title}: ${err.message}`);
+          continue; // Skip to the next file on error
+        }
+      } else {
         await new Promise((resolve, reject) => {
           db.run(
-            'INSERT INTO movies (title, file_path) VALUES (?, ?)',
-            [title, filePath],
+            'UPDATE movies SET file_size = ? WHERE title = ?',
+            [fileSize, title],
             (err) => (err ? reject(err) : resolve())
           );
         });
-        console.log(`Added movie: ${title}`);
       }
     }
 
     for (const movie of existingMovies) {
-      const fileName = path.basename(movie.file_path);
-      if (!movieFiles.includes(fileName)) {
+      const relativePath = movie.file_path.replace('/movies/', '');
+      if (!movieFiles.some(f => f.relativePath === relativePath)) {
         await new Promise((resolve, reject) => {
           db.run('DELETE FROM movies WHERE title = ?', [movie.title], (err) => {
             if (err) reject(err);
@@ -57,7 +92,7 @@ async function syncMoviesWithFolder() {
       }
     }
 
-    console.log('Movies database synchronized with folder.');
+    console.log('Movies database synchronized with folder and subdirectories.');
   } catch (err) {
     console.error('Error syncing movies:', err);
   }
@@ -65,7 +100,6 @@ async function syncMoviesWithFolder() {
 
 // Login endpoint
 app.post('/api/login', (req, res) => {
-  console.log("test");
   const { email, password } = req.body;
   db.get(
     'SELECT * FROM users WHERE email = ? AND password = ?',
@@ -117,13 +151,13 @@ app.get('/api/movies', (req, res) => {
   });
 });
 
-// Download endpoint - Send file as attachment
+// Download endpoint
 app.get('/api/movies/download/:id', (req, res) => {
   db.get('SELECT title, file_path FROM movies WHERE id = ?', [req.params.id], (err, row) => {
     if (err) return res.status(500).json({ error: err.message });
     if (!row) return res.status(404).json({ error: 'Movie not found' });
 
-    const filePath = path.join(MOVIES_DIR, path.basename(row.file_path));
+    const filePath = path.join(MOVIES_DIR, row.file_path.replace('/movies/', '')); // Adjusted for full path
     const fileName = `${row.title}${path.extname(row.file_path)}`;
 
     res.download(filePath, fileName, (err) => {
@@ -138,7 +172,7 @@ app.get('/api/movies/download/:id', (req, res) => {
 // Endpoint to update movies folder path (admin only)
 app.post('/api/admin/configure', (req, res) => {
   const { email, newPath } = req.body;
-  if (email !== 'admin@spidermovies.com') {
+  if (email !== 'admin@spi.com') {
     return res.status(403).json({ error: 'Unauthorized' });
   }
   MOVIES_DIR = path.resolve(newPath);
@@ -153,7 +187,7 @@ app.post('/api/admin/configure', (req, res) => {
 // Endpoint to refresh movies (admin only)
 app.post('/api/admin/refresh', (req, res) => {
   const { email } = req.body;
-  if (email !== 'admin@spidermovies.com') {
+  if (email !== 'admin@spi.com') {
     return res.status(403).json({ error: 'Unauthorized' });
   }
   syncMoviesWithFolder().then(() => {
