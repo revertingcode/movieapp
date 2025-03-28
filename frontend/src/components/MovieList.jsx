@@ -68,7 +68,7 @@ function MovieList({ onLogout, userEmail }) {
       <div className="header">
         <h2>Movie List</h2>
         <div>
-          {userEmail === 'admin@spidermovies.com' && (
+          {userEmail === 'admin@spi.com' && (
             <button onClick={handleRefresh} className="refresh-btn">Refresh</button>
           )}
           <button onClick={onLogout} className="logout-btn">Logout</button>
